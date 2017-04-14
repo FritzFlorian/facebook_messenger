@@ -12,60 +12,115 @@ defmodule FacebookMessenger.Sender do
   """
   @spec send(String.t, String.t) :: HTTPotion.Response.t
   def send(recepient, message) do
-    res = manager.post(
-      url: url,
-      body: text_payload(recepient, message) |> to_json
-    )
-    Logger.info("response from FB #{inspect(res)}")
-    res
+    text_payload(recepient, message)
+    |> to_json
+    |> post_to_messenger_api
   end
 
   @doc """
   sends an image message to the recipient
 
-  * :recepient - the recepient to send the message to
-  * :image_url - the url of the image to be sent
+    * :recepient - the recepient to send the message to
+    * :image_url - the url of the image to be sent
   """
   @spec send_image(String.t, String.t) :: HTTPotion.Response.t
   def send_image(recepient, image_url) do
-    res = manager.post(
-      url: url,
-      body: image_payload(recepient, image_url) |> to_json
-    )
-    Logger.info("response fro FB #{inspect(res)}")
-    res
+    attachment_payload(recepient, "image", image_url)
+    |> to_json
+    |> post_to_messenger_api
+  end
+
+  @doc """
+  sends an audio message to the recipient
+
+  * :recipient - the recipient to send the message to
+  * :audio_url - the url of the audio to be sent
+  """
+  @spec send_audio(String.t, String.t) :: HTTPotion.Response.t
+  def send_audio(recipient, audio_url) do
+    attachment_payload(recipient, "audio", audio_url)
+    |> to_json
+    |> post_to_messenger_api
+  end
+
+  @doc """
+  sends an video message to the recipient
+
+  * :recipient - the recipient to send the message to
+  * :video_url - the url of the video to be sent
+  """
+  @spec send_video(String.t, String.t) :: HTTPotion.Response.t
+  def send_video(recipient, video_url) do
+    attachment_payload(recipient, "video", video_url)
+    |> to_json
+    |> post_to_messenger_api
+  end
+
+  @doc """
+  sends an file message to the recipient
+
+  * :recipient - the recipient to send the message to
+  * :file_url - the url of the file to be sent
+  """
+  @spec send_file(String.t, String.t) :: HTTPotion.Response.t
+  def send_file(recipient, file_url) do
+    attachment_payload(recipient, "file", file_url)
+    |> to_json
+    |> post_to_messenger_api
+  end
+
+  @doc """
+  Sends a sender_action to the recipient.
+  Possible action_names are: mark_seen, typing_on, typing_off
+
+    * :recipient - the recipient to send the message to
+    * :action_name - one of mark_seen, typing_on or typing_off
+  """
+  @spec send_action(String.t, String.t) :: HTTPotion.Response.t
+  def send_action(recipient, action_name) when action_name in ~w(mark_seen typing_on typing_off) do
+    action_payload(recipient, action_name)
+    |> to_json
+    |> post_to_messenger_api
   end
 
   @doc """
   creates a payload to send to facebook
 
-    * :recepient - the recepient to send the message to
+    * :recipient - the recipient to send the message to
     * :message - the message to send
   """
-  def text_payload(recepient, message) do
+  def text_payload(recipient, message) do
     %{
-      recipient: %{id: recepient},
+      recipient: %{id: recipient},
       message: %{text: message}
     }
   end
 
   @doc """
-  creates a payload for an image message to send to facebook
+  creates a payload for an attachment to send to facebook
 
-    * :recepient - the recepient to send the message to
-    * :image_url - the url of the image to be sent
+    * :recipient - the recipient to send the message to
+    * :type - the attachment type to send
+    * :url - the url of the attachment to send
   """
-  def image_payload(recepient, image_url) do
+  def attachment_payload(recipient, type, url) when type in ~w(image video file audio) do
     %{
-      recipient: %{id: recepient},
+      recipient: %{id: recipient},
       message: %{
         attachment: %{
-          type: "image",
+          type: type,
           payload: %{
-            url: image_url
+            url: url
           }
         }
       }
+    }
+  end
+
+  def action_payload(recepient, action_name) do
+    %{
+      recipient: %{id: recepient},
+      sender_action: action_name
     }
   end
 
@@ -86,6 +141,20 @@ defmodule FacebookMessenger.Sender do
   def url do
     query = "access_token=#{page_token}"
     "https://graph.facebook.com/v2.6/me/messages?#{query}"
+  end
+
+  @doc """
+  Helper to post a body to the facebook messenger api endpoint.
+
+    * :body - the post body to send to facebook
+  """
+  def post_to_messenger_api(body) do
+    res = manager.post(
+      url: url,
+      body: body
+    )
+    Logger.info("response from FB #{inspect(res)}")
+    res
   end
 
   defp page_token do

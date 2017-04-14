@@ -6,14 +6,19 @@ defmodule TestBotOne.MessageSenderTest do
     assert FacebookMessenger.Sender.url == "https://graph.facebook.com/v2.6/me/messages?access_token=PAGE_TOKEN"
   end
 
-  test "creates a correct image payload" do
-    assert FacebookMessenger.Sender.image_payload(1055439761215256, "sample.com/some_image.png") ==
+  test "creates a correct attachment payload" do
+    assert FacebookMessenger.Sender.attachment_payload(1055439761215256, "image", "sample.com/some_image.png") ==
       %{
         recipient: %{id: 1055439761215256},
         message: %{
            attachment: %{type: "image", payload: %{url: "sample.com/some_image.png"}}
         }
        }
+  end
+
+  test "creates a correct action payload" do
+    assert FacebookMessenger.Sender.action_payload(1055439761215256, "mark_seen") ==
+    %{sender_action: "mark_seen", recipient: %{id: 1055439761215256}}
   end
 
   test "creates a correct text payload" do
@@ -34,5 +39,26 @@ defmodule TestBotOne.MessageSenderTest do
   test "sends correct image message" do
     FacebookMessenger.Sender.send_image(1055439761215256, "sample.com/some_image.png")
     assert_received %{body: "{\"recipient\":{\"id\":1055439761215256},\"message\":{\"attachment\":{\"type\":\"image\",\"payload\":{\"url\":\"sample.com/some_image.png\"}}}}", url: "https://graph.facebook.com/v2.6/me/messages?access_token=PAGE_TOKEN"}
+  end
+
+  test "sends correct audio message" do
+    FacebookMessenger.Sender.send_audio(1055439761215256, "sample.com/some_audio.mp3")
+    assert_received %{body: "{\"recipient\":{\"id\":1055439761215256},\"message\":{\"attachment\":{\"type\":\"audio\",\"payload\":{\"url\":\"sample.com/some_audio.mp3\"}}}}", url: "https://graph.facebook.com/v2.6/me/messages?access_token=PAGE_TOKEN"}
+  end
+
+  test "sends correct video message" do
+    FacebookMessenger.Sender.send_video(1055439761215256, "sample.com/some_video.mp4")
+    assert_received %{body: "{\"recipient\":{\"id\":1055439761215256},\"message\":{\"attachment\":{\"type\":\"video\",\"payload\":{\"url\":\"sample.com/some_video.mp4\"}}}}", url: "https://graph.facebook.com/v2.6/me/messages?access_token=PAGE_TOKEN"}
+  end
+
+  test "sends correct file message" do
+    FacebookMessenger.Sender.send_file(1055439761215256, "sample.com/some_file.pdf")
+    assert_received %{body: "{\"recipient\":{\"id\":1055439761215256},\"message\":{\"attachment\":{\"type\":\"file\",\"payload\":{\"url\":\"sample.com/some_file.pdf\"}}}}", url: "https://graph.facebook.com/v2.6/me/messages?access_token=PAGE_TOKEN"}
+  end
+
+
+  test "sends correct action message" do
+    FacebookMessenger.Sender.send_action(1055439761215256, "mark_seen")
+    assert_received %{body: "{\"sender_action\":\"mark_seen\",\"recipient\":{\"id\":1055439761215256}}", url: "https://graph.facebook.com/v2.6/me/messages?access_token=PAGE_TOKEN"}
   end
 end
