@@ -13,7 +13,6 @@ defmodule FacebookMessenger.Sender do
   @spec send(String.t, String.t) :: HTTPotion.Response.t
   def send(recepient, message) do
     text_payload(recepient, message)
-    |> to_json
     |> post_to_messenger_api
   end
 
@@ -26,7 +25,6 @@ defmodule FacebookMessenger.Sender do
   @spec send_image(String.t, String.t) :: HTTPotion.Response.t
   def send_image(recepient, image_url) do
     attachment_payload(recepient, "image", image_url)
-    |> to_json
     |> post_to_messenger_api
   end
 
@@ -39,7 +37,6 @@ defmodule FacebookMessenger.Sender do
   @spec send_audio(String.t, String.t) :: HTTPotion.Response.t
   def send_audio(recipient, audio_url) do
     attachment_payload(recipient, "audio", audio_url)
-    |> to_json
     |> post_to_messenger_api
   end
 
@@ -52,7 +49,6 @@ defmodule FacebookMessenger.Sender do
   @spec send_video(String.t, String.t) :: HTTPotion.Response.t
   def send_video(recipient, video_url) do
     attachment_payload(recipient, "video", video_url)
-    |> to_json
     |> post_to_messenger_api
   end
 
@@ -65,7 +61,6 @@ defmodule FacebookMessenger.Sender do
   @spec send_file(String.t, String.t) :: HTTPotion.Response.t
   def send_file(recipient, file_url) do
     attachment_payload(recipient, "file", file_url)
-    |> to_json
     |> post_to_messenger_api
   end
 
@@ -79,7 +74,6 @@ defmodule FacebookMessenger.Sender do
   @spec send_action(String.t, String.t) :: HTTPotion.Response.t
   def send_action(recipient, action_name) when action_name in ~w(mark_seen typing_on typing_off) do
     action_payload(recipient, action_name)
-    |> to_json
     |> post_to_messenger_api
   end
 
@@ -144,9 +138,20 @@ defmodule FacebookMessenger.Sender do
   end
 
   @doc """
-  Helper to post a body to the facebook messenger api endpoint.
+  Helper to post a map as body to the facebook messenger api endpoint.
 
-    * :body - the post body to send to facebook
+  * :body - the json map to post as body to facebook
+  """
+  def post_to_messenger_api(body) when is_map(body) do
+    body
+    |> to_json
+    |> post_to_messenger_api
+  end
+
+  @doc """
+  Helper to post a binary body to the facebook messenger api endpoint.
+
+    * :body - the binary encoded post body to send to facebook
   """
   def post_to_messenger_api(body) do
     res = manager.post(
