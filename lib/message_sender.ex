@@ -9,10 +9,12 @@ defmodule FacebookMessenger.Sender do
 
     * :recepient - the recepient to send the message to
     * :message - the message to send
+    * :quick_replies - an optional array of quick replies
   """
-  @spec send(String.t, String.t) :: HTTPotion.Response.t
-  def send(recepient, message) do
+  @spec send(String.t, String.t, [FacebookMessenger.LocationQuickReply | FacebookMessenger.NormalQuickReply]) :: HTTPotion.Response.t
+  def send(recepient, message, quick_replies \\ []) do
     text_payload(recepient, message)
+    |> add_quick_replies(quick_replies)
     |> post_to_messenger_api
   end
 
@@ -21,46 +23,54 @@ defmodule FacebookMessenger.Sender do
 
     * :recepient - the recepient to send the message to
     * :image_url - the url of the image to be sent
+    * :quick_replies - an optional array of quick replies
   """
-  @spec send_image(String.t, String.t) :: HTTPotion.Response.t
-  def send_image(recepient, image_url) do
+  @spec send_image(String.t, String.t, [FacebookMessenger.LocationQuickReply | FacebookMessenger.NormalQuickReply]) :: HTTPotion.Response.t
+  def send_image(recepient, image_url, quick_replies \\ []) do
     attachment_payload(recepient, "image", image_url)
+    |> add_quick_replies(quick_replies)
     |> post_to_messenger_api
   end
 
   @doc """
   sends an audio message to the recipient
 
-  * :recipient - the recipient to send the message to
-  * :audio_url - the url of the audio to be sent
+    * :recipient - the recipient to send the message to
+    * :audio_url - the url of the audio to be sent
+    * :quick_replies - an optional array of quick replies
   """
-  @spec send_audio(String.t, String.t) :: HTTPotion.Response.t
-  def send_audio(recipient, audio_url) do
+  @spec send_audio(String.t, String.t, [FacebookMessenger.LocationQuickReply | FacebookMessenger.NormalQuickReply]) :: HTTPotion.Response.t
+  def send_audio(recipient, audio_url, quick_replies \\ []) do
     attachment_payload(recipient, "audio", audio_url)
+    |> add_quick_replies(quick_replies)
     |> post_to_messenger_api
   end
 
   @doc """
   sends an video message to the recipient
 
-  * :recipient - the recipient to send the message to
-  * :video_url - the url of the video to be sent
+    * :recipient - the recipient to send the message to
+    * :video_url - the url of the video to be sent
+    * :quick_replies - an optional array of quick replies
   """
-  @spec send_video(String.t, String.t) :: HTTPotion.Response.t
-  def send_video(recipient, video_url) do
+  @spec send_video(String.t, String.t, [FacebookMessenger.LocationQuickReply | FacebookMessenger.NormalQuickReply]) :: HTTPotion.Response.t
+  def send_video(recipient, video_url, quick_replies \\ []) do
     attachment_payload(recipient, "video", video_url)
+    |> add_quick_replies(quick_replies)
     |> post_to_messenger_api
   end
 
   @doc """
   sends an file message to the recipient
 
-  * :recipient - the recipient to send the message to
-  * :file_url - the url of the file to be sent
+    * :recipient - the recipient to send the message to
+    * :file_url - the url of the file to be sent
+    * :quick_replies - an optional array of quick replies
   """
-  @spec send_file(String.t, String.t) :: HTTPotion.Response.t
-  def send_file(recipient, file_url) do
+  @spec send_file(String.t, String.t, [FacebookMessenger.LocationQuickReply | FacebookMessenger.NormalQuickReply]) :: HTTPotion.Response.t
+  def send_file(recipient, file_url, quick_replies \\ []) do
     attachment_payload(recipient, "file", file_url)
+    |> add_quick_replies(quick_replies)
     |> post_to_messenger_api
   end
 
@@ -119,9 +129,26 @@ defmodule FacebookMessenger.Sender do
   end
 
   @doc """
+  adds the given quick replies to the response map.
+  Leaves the current_response unchanged if the quick_replies array is empty
+
+    * :current_response - the current response given as a map
+    * :quick_replies - an array of quick replies to add to the response
+  """
+  def add_quick_replies(current_response, quick_replies = []) do
+    current_response
+  end
+
+  def add_quick_replies(current_response, quick_replies) do
+    Map.update(current_response, :message, %{quick_replies: quick_replies}, fn message_part ->
+      Map.put(message_part, :quick_replies, quick_replies)
+    end)
+  end
+
+  @doc """
   converts a map to json using poison
 
-  * :map - the map to be converted to json
+    * :map - the map to be converted to json
   """
   def to_json(map) do
     map

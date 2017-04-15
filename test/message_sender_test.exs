@@ -31,6 +31,21 @@ defmodule TestBotOne.MessageSenderTest do
     "{\"test_key\":\"test_value\"}"
   end
 
+  test "adds quick replies to response with message key" do
+    assert FacebookMessenger.Sender.add_quick_replies(%{message: %{text: "Hello"}, recipient: %{id: 123}}, [%FacebookMessenger.LocationQuickReply{}]) ==
+    %{message: %{text: "Hello", quick_replies: [%FacebookMessenger.LocationQuickReply{}]}, recipient: %{id: 123}}
+  end
+
+  test "adds qick replies to response without message key" do
+    assert FacebookMessenger.Sender.add_quick_replies(%{sender_action: "mark_seen", recipient: %{id: 123}}, [%FacebookMessenger.LocationQuickReply{}]) ==
+    %{sender_action: "mark_seen", recipient: %{id: 123}, message: %{quick_replies: [%FacebookMessenger.LocationQuickReply{}]}}
+  end
+
+  test "adds nothing when trying to add empty list of quick replies" do
+    assert FacebookMessenger.Sender.add_quick_replies(%{sender_action: "mark_seen", recipient: %{id: 123}}, []) ==
+    %{sender_action: "mark_seen", recipient: %{id: 123}}
+  end
+
   test "sends correct text message" do
     FacebookMessenger.Sender.send(1055439761215256, "Hello")
     assert_received %{body: "{\"recipient\":{\"id\":1055439761215256},\"message\":{\"text\":\"Hello\"}}", url: "https://graph.facebook.com/v2.6/me/messages?access_token=PAGE_TOKEN"}
